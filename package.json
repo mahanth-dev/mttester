@@ -1,0 +1,42 @@
+{
+  "name": "mttester",
+  "version": "1.0.0",
+  "description": "Lightweight HTTP load testing CLI with worker pool and rich reporting",
+  "type": "module",
+  "bin": {
+    "mttester": "./bin/mttester.js"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "test": "node --test 'test/**/*.test.js'",
+    "typecheck": "tsc -p jsconfig.json --noEmit",
+    "start": "node bin/mttester.js",
+    "web": "node src/server/index.js",
+    "docker:up": "docker-compose up --build -d",
+    "docker:down": "docker-compose down"
+  },
+  "keywords": [
+    "load-testing",
+    "http",
+    "benchmark",
+    "performance"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "undici": "^7.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.7.3"
+  },
+  "files": [
+    "bin",
+    "src",
+    "LICENSE",
+    "README.md",
+    "README.fa.md",
+    "CHANGELOG.md"
+  ]
+}

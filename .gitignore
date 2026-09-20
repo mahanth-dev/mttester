@@ -1,0 +1,10 @@
+node_modules/
+report.json
+report.csv
+report.html
+*.log
+.DS_Store
+coverage/
+.nyc_output/
+.env
+.env.*

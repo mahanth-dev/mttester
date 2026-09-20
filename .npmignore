@@ -1,0 +1,7 @@
+test/
+.github/
+jsconfig.json
+*.log
+report.json
+report.csv
+report.html

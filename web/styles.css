@@ -1,0 +1,293 @@
+:root {
+  --bg: #e6ebe8;
+  --bg-2: #d5ddd8;
+  --ink: #121612;
+  --muted: #4a554c;
+  --line: #9aa89d;
+  --panel: rgba(250, 252, 250, 0.86);
+  --accent: #0f7a4a;
+  --accent-2: #c45c26;
+  --danger: #9b1d1d;
+  --ok: #0f7a4a;
+  --shadow: 0 24px 60px rgba(18, 22, 18, 0.12);
+  --font-display: "Syne", sans-serif;
+  --font-body: "IBM Plex Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  color: var(--ink);
+  font-family: var(--font-body);
+  background:
+    radial-gradient(1200px 700px at 12% -10%, #f4f7f4 0%, transparent 55%),
+    radial-gradient(900px 600px at 100% 0%, #c9d8cf 0%, transparent 50%),
+    linear-gradient(165deg, var(--bg), var(--bg-2));
+}
+
+.noise {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  z-index: 0;
+}
+
+.hero, .shell, .foot { position: relative; z-index: 1; }
+
+.hero {
+  padding: 4.5rem clamp(1.25rem, 4vw, 3.5rem) 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  animation: rise 0.7s ease-out both;
+}
+
+.eyebrow {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.brand {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(3.4rem, 12vw, 7.2rem);
+  line-height: 0.92;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+}
+
+.lede {
+  margin: 1.1rem 0 0;
+  max-width: 34rem;
+  font-size: 1.12rem;
+  line-height: 1.45;
+  color: var(--muted);
+  animation: rise 0.8s 0.08s ease-out both;
+}
+
+.shell {
+  max-width: 1100px;
+  margin: 0 auto 3rem;
+  padding: 0 clamp(1.25rem, 4vw, 3.5rem);
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 960px) {
+  .shell {
+    grid-template-columns: 1.15fr 0.85fr;
+    align-items: start;
+  }
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+  padding: 1.35rem 1.4rem 1.5rem;
+  animation: rise 0.75s 0.12s ease-out both;
+}
+
+.panel-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
+
+.panel-head p {
+  margin: 0.35rem 0 1.1rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem 0.9rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field-wide { grid-column: 1 / -1; }
+
+.field span {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.field span em {
+  font-style: normal;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.8;
+}
+
+input, select, textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: #fbfcfb;
+  color: var(--ink);
+  font: 500 0.95rem/1.4 var(--font-mono);
+  padding: 0.7rem 0.75rem;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.check {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.check input { width: auto; margin-top: 0.2rem; }
+
+.actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.35rem;
+}
+
+.btn {
+  border: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  padding: 0.75rem 1.15rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.btn:hover { transform: translateY(-1px); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.btn.primary {
+  background: var(--ink);
+  color: #f4f7f4;
+}
+
+.btn.primary:hover { background: var(--accent); border-color: var(--accent); }
+
+.btn.danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.btn.ghost { background: transparent; }
+
+.meters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 520px) {
+  .meters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.meter {
+  border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  padding: 0.7rem 0.75rem;
+  background: #f7faf7;
+}
+
+.meter span {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.meter strong {
+  display: block;
+  margin-top: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.summary {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  padding-top: 1rem;
+}
+
+.once-out {
+  margin: 0;
+  padding: 0.9rem;
+  background: #121612;
+  color: #d7ebe0;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  overflow: auto;
+  max-height: 28rem;
+}
+
+.error-box {
+  margin-top: 0.85rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 8%, white);
+  font-size: 0.9rem;
+}
+
+.foot {
+  max-width: 1100px;
+  margin: 0 auto 2rem;
+  padding: 0 clamp(1.25rem, 4vw, 3.5rem);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 700px) {
+  .form { grid-template-columns: 1fr; }
+  .field-wide { grid-column: auto; }
+  .actions, .check { grid-column: auto; }
+}
