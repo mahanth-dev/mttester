@@ -28,7 +28,7 @@ Point MTTESTER at a URL, flood it with 50 / 100 / 1000 live virtual users, and g
 ## Quick start (Docker)
 
 ```bash
-git clone https://github.com/OWNER/mttester.git
+git clone https://github.com/mahanth-dev/mttester.git
 cd mttester
 docker-compose up --build -d
 ```

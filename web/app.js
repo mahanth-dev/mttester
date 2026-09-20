@@ -7,10 +7,17 @@ const startBtn = document.getElementById('start-btn');
 const onceBtn = document.getElementById('once-btn');
 const cancelBtn = document.getElementById('cancel-btn');
 const statusLine = document.getElementById('status-line');
+const statusPill = document.getElementById('status-pill');
 const meters = document.getElementById('meters');
 const summary = document.getElementById('summary');
 const onceOut = document.getElementById('once-out');
 const errorBox = document.getElementById('error-box');
+
+function setStatusPill(state) {
+  if (!statusPill) return;
+  statusPill.dataset.state = state || 'idle';
+  statusPill.textContent = state || 'idle';
+}
 
 let activeRunId = null;
 /** @type {ReturnType<typeof setInterval>|null} */
@@ -128,6 +135,7 @@ async function pollRun(id) {
   if (!res.ok) throw new Error(run.error || 'Failed to load run');
 
   statusLine.textContent = `Run ${run.status}${run.live ? ` · ${run.live.requestsTotal} reqs` : ''}`;
+  setStatusPill(run.status);
   if (run.live) renderLive(run.live);
 
   if (run.status === 'running' || run.status === 'queued') return false;
@@ -171,6 +179,7 @@ form.addEventListener('submit', async (e) => {
   summary.hidden = true;
   const payload = formPayload();
   statusLine.textContent = 'Starting run…';
+  setStatusPill('queued');
   try {
     const res = await fetch('/api/runs', {
       method: 'POST',
@@ -184,6 +193,7 @@ form.addEventListener('submit', async (e) => {
   } catch (err) {
     setError(err instanceof Error ? err.message : String(err));
     statusLine.textContent = 'Failed to start';
+    setStatusPill('failed');
   }
 });
 
@@ -192,6 +202,7 @@ onceBtn.addEventListener('click', async () => {
   summary.hidden = true;
   const payload = formPayload();
   statusLine.textContent = 'Sending single request…';
+  setStatusPill('running');
   try {
     const res = await fetch('/api/once', {
       method: 'POST',
@@ -203,9 +214,11 @@ onceBtn.addEventListener('click', async () => {
     onceOut.hidden = false;
     onceOut.textContent = JSON.stringify(data, null, 2);
     statusLine.textContent = `Once → HTTP ${data.status} in ${formatMs(data.durationMs)}`;
+    setStatusPill('completed');
   } catch (err) {
     setError(err instanceof Error ? err.message : String(err));
     statusLine.textContent = 'Once failed';
+    setStatusPill('failed');
   }
 });
 

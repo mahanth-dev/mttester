@@ -11,7 +11,7 @@
 ## شروع سریع با Docker
 
 ```bash
-git clone https://github.com/OWNER/mttester.git
+git clone https://github.com/mahanth-dev/mttester.git
 cd mttester
 docker-compose up --build -d
 ```

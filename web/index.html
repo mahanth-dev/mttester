@@ -11,124 +11,134 @@
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
-  <header class="hero">
-    <p class="eyebrow">HTTP load laboratory</p>
-    <h1 class="brand">MTTESTER</h1>
-    <p class="lede">Point at a URL. Flood it with live virtual users. Read what held and what broke.</p>
-  </header>
-
-  <main class="shell">
-    <section class="panel" aria-labelledby="run-heading">
-      <div class="panel-head">
-        <h2 id="run-heading">New run</h2>
-        <p>Configure traffic, then launch. Only test systems you are authorized to hit.</p>
+  <div class="page">
+    <header class="hero">
+      <div class="hero-top">
+        <p class="eyebrow">HTTP load laboratory</p>
+        <span class="badge">v1.0</span>
       </div>
+      <h1 class="brand">MTTESTER</h1>
+      <p class="lede">Point at a URL. Flood it with live virtual users. Read what held and what broke.</p>
+    </header>
 
-      <form id="run-form" class="form">
-        <label class="field field-wide">
-          <span>Target URL</span>
-          <input id="url" name="url" type="url" required placeholder="https://example.com/api" autocomplete="url" />
-        </label>
-
-        <label class="field">
-          <span>Method</span>
-          <select id="method" name="method">
-            <option>GET</option>
-            <option>POST</option>
-            <option>PUT</option>
-            <option>PATCH</option>
-            <option>DELETE</option>
-            <option>HEAD</option>
-            <option>OPTIONS</option>
-          </select>
-        </label>
-
-        <label class="field">
-          <span>Mode</span>
-          <select id="mode" name="mode">
-            <option value="closed">Closed-loop (VUs)</option>
-            <option value="open">Open-loop (rate)</option>
-          </select>
-        </label>
-
-        <label class="field" id="vus-field">
-          <span>Virtual users</span>
-          <input id="vus" name="vus" type="number" min="1" max="5000" value="50" />
-        </label>
-
-        <label class="field" id="rate-field" hidden>
-          <span>Rate (req/s)</span>
-          <input id="rate" name="rate" type="number" min="1" max="10000" value="100" />
-        </label>
-
-        <label class="field">
-          <span>Duration</span>
-          <input id="duration" name="duration" type="text" value="30s" placeholder="30s / 5m" />
-        </label>
-
-        <label class="field">
-          <span>Checks</span>
-          <input id="checks" name="checks" type="text" value="status:2xx" placeholder="status:200, body:ok" />
-        </label>
-
-        <label class="field">
-          <span>Thresholds</span>
-          <input id="thresholds" name="thresholds" type="text" placeholder="http_req_duration.p95&lt;500" />
-        </label>
-
-        <label class="field field-wide">
-          <span>Headers <em>(one per line: Name: value)</em></span>
-          <textarea id="headers" name="headers" rows="3" placeholder="Authorization: Bearer …&#10;Content-Type: application/json"></textarea>
-        </label>
-
-        <label class="field field-wide">
-          <span>Body</span>
-          <textarea id="body" name="body" rows="4" placeholder='{"hello":"world"}'></textarea>
-        </label>
-
-        <label class="check">
-          <input id="authorized" name="authorized" type="checkbox" required />
-          <span>I am authorized to load-test this target</span>
-        </label>
-
-        <label class="check" id="high-load-wrap" hidden>
-          <input id="confirmHighLoad" name="confirmHighLoad" type="checkbox" />
-          <span>Confirm high load (&gt;500 VUs or &gt;2000 req/s)</span>
-        </label>
-
-        <div class="actions">
-          <button type="submit" class="btn primary" id="start-btn">Start load test</button>
-          <button type="button" class="btn ghost" id="once-btn">Send once</button>
-          <button type="button" class="btn danger" id="cancel-btn" hidden>Cancel</button>
+    <main class="shell">
+      <section class="panel" aria-labelledby="run-heading">
+        <div class="panel-head">
+          <h2 id="run-heading">New run</h2>
+          <p>Configure traffic, then launch. Only test systems you are authorized to hit.</p>
         </div>
-      </form>
-    </section>
 
-    <section class="panel results" aria-labelledby="results-heading">
-      <div class="panel-head">
-        <h2 id="results-heading">Live report</h2>
-        <p id="status-line">Idle — configure a run and start.</p>
-      </div>
+        <form id="run-form" class="form">
+          <label class="field field-wide">
+            <span>Target URL</span>
+            <input id="url" name="url" type="url" required placeholder="https://example.com/api" autocomplete="url" />
+          </label>
 
-      <div class="meters" id="meters" hidden>
-        <div class="meter"><span>Elapsed</span><strong id="m-elapsed">0s</strong></div>
-        <div class="meter"><span>VUs</span><strong id="m-vus">0</strong></div>
-        <div class="meter"><span>Requests</span><strong id="m-reqs">0</strong></div>
-        <div class="meter"><span>RPS</span><strong id="m-rps">0</strong></div>
-        <div class="meter"><span>Failed</span><strong id="m-fail">0</strong></div>
-        <div class="meter"><span>Avg latency</span><strong id="m-avg">—</strong></div>
-      </div>
+          <label class="field">
+            <span>Method</span>
+            <select id="method" name="method">
+              <option>GET</option>
+              <option>POST</option>
+              <option>PUT</option>
+              <option>PATCH</option>
+              <option>DELETE</option>
+              <option>HEAD</option>
+              <option>OPTIONS</option>
+            </select>
+          </label>
 
-      <div id="summary" class="summary" hidden></div>
-      <pre id="once-out" class="once-out" hidden></pre>
-      <div id="error-box" class="error-box" hidden></div>
-    </section>
-  </main>
+          <label class="field">
+            <span>Mode</span>
+            <select id="mode" name="mode">
+              <option value="closed">Closed-loop (VUs)</option>
+              <option value="open">Open-loop (rate)</option>
+            </select>
+          </label>
 
-  <footer class="foot">
-    <span>MTTESTER</span>
-    <span>Use only on systems you own or have permission to test.</span>
-  </footer>
+          <label class="field" id="vus-field">
+            <span>Virtual users</span>
+            <input id="vus" name="vus" type="number" min="1" max="5000" value="50" />
+          </label>
+
+          <label class="field" id="rate-field" hidden>
+            <span>Rate (req/s)</span>
+            <input id="rate" name="rate" type="number" min="1" max="10000" value="100" />
+          </label>
+
+          <label class="field">
+            <span>Duration</span>
+            <input id="duration" name="duration" type="text" value="30s" placeholder="30s / 5m" />
+          </label>
+
+          <label class="field">
+            <span>Checks</span>
+            <input id="checks" name="checks" type="text" value="status:2xx" placeholder="status:200, body:ok" />
+          </label>
+
+          <label class="field">
+            <span>Thresholds</span>
+            <input id="thresholds" name="thresholds" type="text" placeholder="http_req_duration.p95&lt;500" />
+          </label>
+
+          <label class="field field-wide">
+            <span>Headers <em>(one per line: Name: value)</em></span>
+            <textarea id="headers" name="headers" rows="3" placeholder="Authorization: Bearer …&#10;Content-Type: application/json"></textarea>
+          </label>
+
+          <label class="field field-wide">
+            <span>Body</span>
+            <textarea id="body" name="body" rows="4" placeholder='{"hello":"world"}'></textarea>
+          </label>
+
+          <div class="checks-block">
+            <label class="check">
+              <input id="authorized" name="authorized" type="checkbox" required />
+              <span>I am authorized to load-test this target</span>
+            </label>
+
+            <label class="check" id="high-load-wrap" hidden>
+              <input id="confirmHighLoad" name="confirmHighLoad" type="checkbox" />
+              <span>Confirm high load (&gt;500 VUs or &gt;2000 req/s)</span>
+            </label>
+          </div>
+
+          <div class="actions">
+            <button type="submit" class="btn primary" id="start-btn">Start load test</button>
+            <button type="button" class="btn ghost" id="once-btn">Send once</button>
+            <button type="button" class="btn danger" id="cancel-btn" hidden>Cancel</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel results" aria-labelledby="results-heading">
+        <div class="panel-head row">
+          <div>
+            <h2 id="results-heading">Live report</h2>
+            <p id="status-line">Idle — configure a run and start.</p>
+          </div>
+          <span class="status-pill" id="status-pill" data-state="idle">idle</span>
+        </div>
+
+        <div class="meters" id="meters" hidden>
+          <div class="meter"><span>Elapsed</span><strong id="m-elapsed">0s</strong></div>
+          <div class="meter"><span>VUs</span><strong id="m-vus">0</strong></div>
+          <div class="meter"><span>Requests</span><strong id="m-reqs">0</strong></div>
+          <div class="meter"><span>RPS</span><strong id="m-rps">0</strong></div>
+          <div class="meter"><span>Failed</span><strong id="m-fail">0</strong></div>
+          <div class="meter"><span>Avg latency</span><strong id="m-avg">—</strong></div>
+        </div>
+
+        <div id="summary" class="summary" hidden></div>
+        <pre id="once-out" class="once-out" hidden></pre>
+        <div id="error-box" class="error-box" hidden></div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <span>MTTESTER</span>
+      <span>Use only on systems you own or have permission to test.</span>
+    </footer>
+  </div>
 
   <script src="/app.js" type="module"></script>
 </body>
