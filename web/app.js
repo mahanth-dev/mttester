@@ -1,7 +1,13 @@
 const form = document.getElementById('run-form');
+const profileEl = document.getElementById('profile');
 const modeEl = document.getElementById('mode');
+const modeField = document.getElementById('mode-field');
 const vusField = document.getElementById('vus-field');
 const rateField = document.getElementById('rate-field');
+const journeyField = document.getElementById('journey-field');
+const thinkMinField = document.getElementById('think-min-field');
+const thinkMaxField = document.getElementById('think-max-field');
+const realisticHint = document.getElementById('realistic-hint');
 const highLoadWrap = document.getElementById('high-load-wrap');
 const startBtn = document.getElementById('start-btn');
 const onceBtn = document.getElementById('once-btn');
@@ -46,8 +52,13 @@ function parseHeaders(text) {
   return headers;
 }
 
+function isRealistic() {
+  return profileEl.value === 'realistic';
+}
+
 function formPayload() {
-  const mode = modeEl.value;
+  const realistic = isRealistic();
+  const mode = realistic ? 'closed' : modeEl.value;
   const vus = Number(document.getElementById('vus').value || 1);
   const rate = Number(document.getElementById('rate').value || 0);
   return {
@@ -60,13 +71,35 @@ function formPayload() {
     thresholds: document.getElementById('thresholds').value.trim(),
     headers: parseHeaders(document.getElementById('headers').value),
     body: document.getElementById('body').value,
+    journey: document.getElementById('journey')?.value || '',
+    thinkTime: document.getElementById('thinkTime')?.value || '',
+    thinkTimeMax: document.getElementById('thinkTimeMax')?.value || '',
+    realistic,
     authorized: document.getElementById('authorized').checked,
     confirmHighLoad: document.getElementById('confirmHighLoad').checked,
     locale: 'fa',
   };
 }
 
+function updateProfileUi() {
+  const realistic = isRealistic();
+  journeyField.hidden = !realistic;
+  thinkMinField.hidden = !realistic;
+  thinkMaxField.hidden = !realistic;
+  realisticHint.hidden = !realistic;
+  modeField.hidden = realistic;
+  if (realistic) {
+    modeEl.value = 'closed';
+    rateField.hidden = true;
+    vusField.hidden = false;
+  } else {
+    updateModeUi();
+  }
+  updateHighLoadUi();
+}
+
 function updateModeUi() {
+  if (isRealistic()) return;
   const open = modeEl.value === 'open';
   rateField.hidden = !open;
   vusField.hidden = open;
@@ -74,7 +107,7 @@ function updateModeUi() {
 }
 
 function updateHighLoadUi() {
-  const mode = modeEl.value;
+  const mode = isRealistic() ? 'closed' : modeEl.value;
   const vus = Number(document.getElementById('vus').value || 0);
   const rate = Number(document.getElementById('rate').value || 0);
   const needs = (mode === 'closed' && vus > 500) || (mode === 'open' && rate > 2000);
@@ -272,9 +305,10 @@ function startPolling(id) {
 }
 
 modeEl.addEventListener('change', updateModeUi);
+profileEl.addEventListener('change', updateProfileUi);
 document.getElementById('vus').addEventListener('input', updateHighLoadUi);
 document.getElementById('rate').addEventListener('input', updateHighLoadUi);
-updateModeUi();
+updateProfileUi();
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();

@@ -2,18 +2,26 @@ import { httpRequest } from './http-client.js';
 import { runChecks } from '../checks/index.js';
 import { pickScenario, resolveStep, orderedSteps, applyExtractRules } from './scenario.js';
 import { Feeder } from '../data/feeder.js';
+import {
+  CookieJar,
+  browserHeadersForVu,
+  mergeHeaders,
+  randomThinkMs,
+} from './browser.js';
 
 /**
- * Execute a single virtual-user iteration.
+ * Execute a single virtual-user iteration (one user session pass).
  * @param {object} params
  * @param {import('./plan.js').SerializedPlan} params.plan
  * @param {number} params.vuId
  * @param {number} params.totalVus
  * @param {Feeder|null} params.feeder
  * @param {number} params.iteration
+ * @param {CookieJar} [params.jar]
  * @returns {Promise<import('./protocol.js').RequestResult>}
  */
-export async function executeIteration({ plan, vuId, totalVus, feeder, iteration = 0 }) {
+export async function executeIteration({ plan, vuId, totalVus, feeder, iteration = 0, jar = undefined }) {
+  const cookieJar = jar ?? (plan.cookieJar ? new CookieJar() : null);
   const scenarioDef = pickScenario(plan.scenarios);
   const vars = {
     ...(feeder?.nextForVu(vuId) ?? {}),
@@ -22,19 +30,39 @@ export async function executeIteration({ plan, vuId, totalVus, feeder, iteration
   };
   const steps = orderedSteps(scenarioDef);
   const startTs = Date.now();
+  const browser = plan.browserHeaders ? browserHeadersForVu(vuId) : {};
 
   /** @type {import('./protocol.js').RequestResult|null} */
   let lastResult = null;
   /** @type {import('../checks/index.js').CheckResult[]} */
   let allChecks = [];
   let anyRequestFailed = false;
+  let totalBytesIn = 0;
+  let totalBytesOut = 0;
+  let totalDuration = 0;
 
-  for (const step of steps) {
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i];
     const resolved = resolveStep(step, vars);
-    const stepResult = await executeStep(resolved, plan.timeoutMs, step.name ?? scenarioDef.name);
+    let headers = mergeHeaders(browser, resolved.headers);
+    if (cookieJar) headers = cookieJar.applyTo(headers);
+
+    const stepResult = await executeStep(
+      { ...resolved, headers },
+      plan.timeoutMs,
+      step.name ?? scenarioDef.name,
+    );
+
+    if (cookieJar && stepResult.headers) {
+      cookieJar.storeFromResponse(stepResult.headers);
+    }
+
     allChecks = allChecks.concat(stepResult.checks);
     if (!stepResult.ok) anyRequestFailed = true;
     lastResult = stepResult;
+    totalBytesIn += stepResult.bytesReceived;
+    totalBytesOut += stepResult.bytesSent;
+    totalDuration += stepResult.durationMs;
 
     if (step.extract) {
       applyExtractRules(step.extract, {
@@ -44,8 +72,13 @@ export async function executeIteration({ plan, vuId, totalVus, feeder, iteration
       }, vars);
     }
 
-    if (!stepResult.ok && step !== steps[steps.length - 1]) {
+    if (!stepResult.ok && i < steps.length - 1) {
       break;
+    }
+
+    // Pause between pages like a real user reading / clicking
+    if (i < steps.length - 1 && (plan.stepThinkMaxMs > 0 || plan.stepThinkMinMs > 0)) {
+      await thinkTime(randomThinkMs(plan.stepThinkMinMs, plan.stepThinkMaxMs));
     }
   }
 
@@ -74,6 +107,9 @@ export async function executeIteration({ plan, vuId, totalVus, feeder, iteration
     checks: allChecks,
     checksPassed,
     ok: !anyRequestFailed,
+    durationMs: totalDuration || lastResult.durationMs,
+    bytesReceived: totalBytesIn,
+    bytesSent: totalBytesOut,
     timestamp: startTs,
   };
 }

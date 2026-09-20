@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { createPlan } from '../core/plan.js';
+import { createPlan, buildJourneyScenario } from '../core/plan.js';
 import { runTest, assertThresholds } from '../core/coordinator.js';
 import { buildJsonReport } from '../report/json.js';
 import { parseCheckSpecs } from '../checks/index.js';
@@ -219,29 +219,68 @@ function planFromBody(body) {
     thresholds.push(t);
   }
 
-  const rate = body.rate != null && body.rate !== '' ? Number(body.rate) : null;
+  const realistic = Boolean(body.realistic);
+  const rate = realistic ? null : (body.rate != null && body.rate !== '' ? Number(body.rate) : null);
   const vusExplicit = body.vus != null && body.vus !== '' ? Number(body.vus) : null;
   const mode = rate ? 'open' : 'closed';
   const vus = vusExplicit ?? (mode === 'open' && rate ? Math.max(Math.ceil(rate), 1) : Number(body.vus || 10));
 
-  return createPlan({
-    name: String(body.name || 'web-run'),
-    mode,
-    vus,
-    rate,
-    durationSec: parseDurationValue(body.duration ?? '10s'),
-    iterations: body.iterations != null && body.iterations !== '' ? Number(body.iterations) : null,
-    scenarios: [{
+  const checks = parseCheckSpecs(checkSpecs.length ? checkSpecs : ['status:2xx']);
+  const journeyRaw = body.journey != null ? String(body.journey) : '';
+  const journeyPaths = journeyRaw
+    .split(/[\n,]+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  /** @type {import('../core/plan.js').ScenarioDef[]} */
+  let scenarios;
+  if (realistic) {
+    let baseUrl = url;
+    /** @type {string[]} */
+    let paths = journeyPaths;
+    try {
+      const u = new URL(url);
+      baseUrl = u.origin;
+      if (paths.length === 0) {
+        paths = [`${u.pathname || '/'}${u.search || ''}`];
+      }
+    } catch {
+      if (paths.length === 0) paths = ['/'];
+    }
+    scenarios = [buildJourneyScenario({
+      baseUrl,
+      paths,
+      method,
+      headers,
+      body: body.body ? String(body.body) : null,
+      checks,
+    })];
+  } else {
+    scenarios = [{
       name: 'main',
       method,
       url,
       headers,
       body: body.body ? String(body.body) : null,
-      checks: parseCheckSpecs(checkSpecs.length ? checkSpecs : ['status:2xx']),
-    }],
+      checks,
+    }];
+  }
+
+  return createPlan({
+    name: String(body.name || (realistic ? 'realistic-users' : 'web-run')),
+    mode: realistic ? 'closed' : mode,
+    vus,
+    rate: realistic ? null : rate,
+    durationSec: parseDurationValue(body.duration ?? '10s'),
+    iterations: body.iterations != null && body.iterations !== '' ? Number(body.iterations) : null,
+    scenarios,
     thresholds,
     warmupSec: parseDurationValue(body.warmup || '0') ?? 0,
-    thinkTimeMs: Number(body.thinkTime || 0),
+    thinkTimeMs: body.thinkTime != null && body.thinkTime !== '' ? Number(body.thinkTime) : undefined,
+    thinkTimeMaxMs: body.thinkTimeMax != null && body.thinkTimeMax !== '' ? Number(body.thinkTimeMax) : undefined,
+    realistic,
+    browserHeaders: realistic || Boolean(body.browserHeaders),
+    cookieJar: realistic || Boolean(body.cookieJar),
     timeoutMs: Number(body.timeout || 30_000),
     workerCount: body.workers != null && body.workers !== '' ? Number(body.workers) : undefined,
     confirmHighLoad: Boolean(body.confirmHighLoad),

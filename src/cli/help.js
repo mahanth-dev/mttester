@@ -23,6 +23,9 @@ URL / RUN OPTIONS
   -t, --thresholds <spec>    Threshold: http_req_duration.p95<500
   -w, --warmup <dur>         Warmup duration
       --think <ms>           Think time between iterations
+      --think-max <ms>       Max think time (random range with --think)
+      --realistic            Simulate real users (browser headers, cookies, think, stagger)
+      --journey <paths>      Comma-separated paths for realistic journey
       --timeout <ms>         Request timeout (default: 30000)
       --workers <n>          Worker thread count
       --confirm-high-load    Confirm high-load run (>500 VU or >2000 rps)

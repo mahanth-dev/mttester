@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { PlanError, HighLoadError } from './errors.js';
 import { parseThreshold, validateThresholdMetric } from '../metrics/thresholds.js';
 import { parseCheckSpecs } from '../checks/index.js';
+import { joinUrl } from './browser.js';
 
 /** @typedef {'closed'|'open'} LoopMode */
 
@@ -55,6 +56,13 @@ import { parseCheckSpecs } from '../checks/index.js';
  * @property {import('../metrics/thresholds.js').Threshold[]} thresholds
  * @property {number} warmupSec
  * @property {number} thinkTimeMs
+ * @property {number} thinkTimeMaxMs
+ * @property {number} stepThinkMinMs
+ * @property {number} stepThinkMaxMs
+ * @property {boolean} realistic
+ * @property {boolean} browserHeaders
+ * @property {boolean} cookieJar
+ * @property {number} staggerStartMs
  * @property {number} timeoutMs
  * @property {number} workerCount
  * @property {boolean} confirmHighLoad
@@ -75,6 +83,7 @@ export const HIGH_LOAD_RATE_LIMIT = 2000;
  * @returns {TestPlan}
  */
 export function createPlan(input) {
+  const realistic = Boolean(input.realistic);
   /** @type {TestPlan} */
   const plan = {
     name: input.name ?? 'load-test',
@@ -87,7 +96,14 @@ export function createPlan(input) {
     scenarios: normalizeScenarios(input.scenarios ?? []),
     thresholds: input.thresholds ?? [],
     warmupSec: input.warmupSec ?? 0,
-    thinkTimeMs: input.thinkTimeMs ?? 0,
+    thinkTimeMs: input.thinkTimeMs ?? (realistic ? 1500 : 0),
+    thinkTimeMaxMs: input.thinkTimeMaxMs ?? (realistic ? 5000 : (input.thinkTimeMs ?? 0)),
+    stepThinkMinMs: input.stepThinkMinMs ?? (realistic ? 400 : 0),
+    stepThinkMaxMs: input.stepThinkMaxMs ?? (realistic ? 1800 : 0),
+    realistic,
+    browserHeaders: input.browserHeaders ?? realistic,
+    cookieJar: input.cookieJar ?? realistic,
+    staggerStartMs: input.staggerStartMs ?? (realistic ? 8_000 : 0),
     timeoutMs: input.timeoutMs ?? 30_000,
     workerCount: input.workerCount ?? Math.min(Math.max(1, (input.vus ?? 1)), navigatorHardware()),
     confirmHighLoad: input.confirmHighLoad ?? false,
@@ -95,6 +111,10 @@ export function createPlan(input) {
     feederPath: input.feederPath ?? null,
     discardWarmup: input.discardWarmup ?? true,
   };
+
+  if (realistic && plan.mode === 'open') {
+    throw new PlanError('Realistic user profile requires closed-loop mode (VUs), not open-loop rate');
+  }
 
   validatePlan(plan);
   validateThresholds(plan.thresholds);
@@ -186,6 +206,41 @@ export function checkHighLoadGate(plan) {
 }
 
 /**
+ * Build a multi-page journey scenario from a base URL and path list.
+ * @param {object} opts
+ * @param {string} opts.baseUrl
+ * @param {string[]} opts.paths
+ * @param {string} [opts.method='GET']
+ * @param {Record<string, string>} [opts.headers]
+ * @param {string|null} [opts.body]
+ * @param {import('../checks/index.js').CheckDefinition[]} [opts.checks]
+ * @returns {ScenarioDef}
+ */
+export function buildJourneyScenario({
+  baseUrl,
+  paths,
+  method = 'GET',
+  headers = {},
+  body = null,
+  checks = parseCheckSpecs(['status:2xx']),
+}) {
+  const cleaned = paths.map((p) => String(p).trim()).filter(Boolean);
+  const list = cleaned.length > 0 ? cleaned : ['/'];
+  return {
+    name: 'user-journey',
+    weight: 1,
+    steps: list.map((path, i) => ({
+      name: `step-${i + 1}`,
+      method: i === 0 ? method : 'GET',
+      url: joinUrl(baseUrl, path),
+      headers,
+      body: i === 0 ? body : null,
+      checks,
+    })),
+  };
+}
+
+/**
  * @param {TestPlan} plan
  * @returns {SerializedPlan}
  */
@@ -238,25 +293,40 @@ export function planFromArgs(args) {
   const thresholds = parseThresholdSpecs(args.thresholds || []);
   const mode = args.rate ? 'open' : 'closed';
   const rate = args.rate ?? null;
-  // Open-loop needs enough VUs to sustain the arrival rate. When the user
-  // only passes --rate, auto-size VUs rather than defaulting to 1.
   const workerHint = args.workers ?? 1;
   const vus = args.vus ?? (mode === 'open' && rate
     ? Math.max(Math.ceil(rate), workerHint)
     : 1);
+  const realistic = Boolean(args.realistic);
+
+  if (realistic && args.url && args.journey?.length) {
+    scenarios.length = 0;
+    scenarios.push(buildJourneyScenario({
+      baseUrl: args.url,
+      paths: args.journey,
+      method: args.method || 'GET',
+      headers: args.headers || {},
+      body: args.body || null,
+      checks: parseCheckSpecs(args.checks || ['status:2xx']),
+    }));
+  }
 
   return createPlan({
-    name: args.name || 'load-test',
-    mode,
+    name: args.name || (realistic ? 'realistic-users' : 'load-test'),
+    mode: realistic ? 'closed' : mode,
     vus,
-    rate,
+    rate: realistic ? null : rate,
     durationSec: parseDuration(args.duration),
     iterations: args.iterations ?? null,
     stages: parseStages(args.stage || []),
     scenarios,
     thresholds,
     warmupSec: parseDuration(args.warmup) ?? 0,
-    thinkTimeMs: args.thinkTime ?? 0,
+    thinkTimeMs: args.thinkTime ?? undefined,
+    thinkTimeMaxMs: args.thinkTimeMax ?? undefined,
+    realistic,
+    browserHeaders: realistic || undefined,
+    cookieJar: realistic || undefined,
     timeoutMs: args.timeout ?? 30_000,
     workerCount: args.workers ?? undefined,
     confirmHighLoad: args.confirmHighLoad ?? false,

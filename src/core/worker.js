@@ -5,6 +5,7 @@ import { MetricsRegistry } from '../metrics/registry.js';
 import { RateLimiter } from './schedule.js';
 import { closeAgent } from './http-client.js';
 import { Feeder, loadFeederFromFile } from '../data/feeder.js';
+import { CookieJar, randomThinkMs } from './browser.js';
 
 /** @type {import('./plan.js').SerializedPlan} */
 let plan;
@@ -90,6 +91,13 @@ async function handleStart(msg) {
  */
 async function runVu(vuId) {
   let vuIterations = 0;
+  const jar = plan.cookieJar ? new CookieJar() : null;
+
+  if (plan.staggerStartMs > 0) {
+    const delay = (vuId / Math.max(totalVus, 1)) * plan.staggerStartMs;
+    await thinkTime(delay);
+  }
+
   while (running && !stopRequested && Date.now() < endTime) {
     if (plan.iterations !== null && vuIterations >= plan.iterations) break;
 
@@ -122,6 +130,7 @@ async function runVu(vuId) {
         totalVus,
         feeder,
         iteration: vuIterations,
+        jar: jar || undefined,
       });
       if (!inWarmup) {
         metrics.recordRequest(result);
@@ -138,7 +147,7 @@ async function runVu(vuId) {
       pendingRequests--;
     }
 
-    const thinkMs = plan.thinkTimeMs;
+    const thinkMs = randomThinkMs(plan.thinkTimeMs, plan.thinkTimeMaxMs ?? plan.thinkTimeMs);
     if (thinkMs > 0) await thinkTime(thinkMs);
   }
 }

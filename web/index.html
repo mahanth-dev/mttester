@@ -37,6 +37,14 @@
           </label>
 
           <label class="field">
+            <span>نوع تست</span>
+            <select id="profile" name="profile">
+              <option value="realistic">کاربر واقعی</option>
+              <option value="flood">سیل درخواست (فشار خام)</option>
+            </select>
+          </label>
+
+          <label class="field">
             <span>متد</span>
             <select id="method" name="method">
               <option>GET</option>
@@ -49,8 +57,8 @@
             </select>
           </label>
 
-          <label class="field">
-            <span>حالت</span>
+          <label class="field" id="mode-field">
+            <span>حالت بار</span>
             <select id="mode" name="mode">
               <option value="closed">کاربر همزمان (VU)</option>
               <option value="open">نرخ ثابت (RPS)</option>
@@ -58,8 +66,8 @@
           </label>
 
           <label class="field" id="vus-field">
-            <span>کاربر مجازی</span>
-            <input id="vus" name="vus" type="number" min="1" max="5000" value="50" dir="ltr" />
+            <span>تعداد کاربر</span>
+            <input id="vus" name="vus" type="number" min="1" max="5000" value="20" dir="ltr" />
           </label>
 
           <label class="field" id="rate-field" hidden>
@@ -69,7 +77,22 @@
 
           <label class="field">
             <span>مدت</span>
-            <input id="duration" name="duration" type="text" value="30s" placeholder="30s / 5m" dir="ltr" />
+            <input id="duration" name="duration" type="text" value="1m" placeholder="30s / 5m" dir="ltr" />
+          </label>
+
+          <label class="field field-wide" id="journey-field">
+            <span>مسیر سفر کاربر <em>(هر خط یک صفحه — مثل رفتار واقعی)</em></span>
+            <textarea id="journey" name="journey" rows="4" placeholder="/&#10;/products&#10;/products/1&#10;/cart" dir="ltr"></textarea>
+          </label>
+
+          <label class="field" id="think-min-field">
+            <span>فکر بین جلسات (حداقل ms)</span>
+            <input id="thinkTime" name="thinkTime" type="number" min="0" value="1500" dir="ltr" />
+          </label>
+
+          <label class="field" id="think-max-field">
+            <span>فکر بین جلسات (حداکثر ms)</span>
+            <input id="thinkTimeMax" name="thinkTimeMax" type="number" min="0" value="5000" dir="ltr" />
           </label>
 
           <label class="field">
@@ -81,6 +104,10 @@
             <span>آستانه‌ها</span>
             <input id="thresholds" name="thresholds" type="text" placeholder="http_req_duration.p95&lt;500" dir="ltr" />
           </label>
+
+          <p class="hint" id="realistic-hint">
+            حالت کاربر واقعی: هدر مرورگر، کوکی بین صفحات، ورود تدریجی کاربران، و مکث بین کلیک‌ها — نه سیل ناگهانی.
+          </p>
 
           <label class="field field-wide">
             <span>هدرها <em>(هر خط: Name: value)</em></span>

@@ -206,6 +206,18 @@ html, body {
   opacity: 0.75;
 }
 
+.hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0.7rem 0.8rem;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+  color: var(--accent);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
 input, select, textarea {
   width: 100%;
   border: 1px solid var(--line);

@@ -18,6 +18,9 @@
  * @property {string[]} [thresholds]
  * @property {string} [warmup]
  * @property {number} [thinkTime]
+ * @property {number} [thinkTimeMax]
+ * @property {boolean} [realistic]
+ * @property {string[]} [journey]
  * @property {number} [timeout]
  * @property {number} [workers]
  * @property {boolean} [confirmHighLoad]
@@ -148,7 +151,7 @@ const SHORT_OPTS = {
  * @returns {boolean}
  */
 function isFlag(key) {
-  return ['confirm-high-load', 'quiet', 'no-color', 'help', 'version'].includes(key);
+  return ['confirm-high-load', 'quiet', 'no-color', 'help', 'version', 'realistic'].includes(key);
 }
 
 /**
@@ -203,6 +206,19 @@ function applyOption(args, key, val) {
       break;
     case 'think':
       args.thinkTime = parseInt(val, 10);
+      break;
+    case 'think-max':
+      args.thinkTimeMax = parseInt(val, 10);
+      break;
+    case 'realistic':
+      args.realistic = true;
+      break;
+    case 'journey':
+      args.journey = args.journey || [];
+      for (const part of val.split(',')) {
+        const p = part.trim();
+        if (p) args.journey.push(p);
+      }
       break;
     case 'timeout':
       args.timeout = parseInt(val, 10);
