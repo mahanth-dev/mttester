@@ -34,6 +34,12 @@ export const en = {
     avg: 'avg',
     min: 'min',
     max: 'max',
+    statusCodes: 'Status codes',
+    thresholds: 'Thresholds',
+    whatPassed: 'What passed',
+    whatFailed: 'What failed',
+    noFailures: 'No failures recorded',
+    workerSaturated: 'WORKER SATURATION was detected during this run',
   },
   mock: {
     starting: 'Starting mock server on {url}',

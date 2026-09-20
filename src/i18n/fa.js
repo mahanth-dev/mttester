@@ -34,6 +34,12 @@ export const fa = {
     avg: 'میانگین',
     min: 'حداقل',
     max: 'حداکثر',
+    statusCodes: 'کدهای وضعیت',
+    thresholds: 'آستانه‌ها',
+    whatPassed: 'چی شد',
+    whatFailed: 'چی نشد',
+    noFailures: 'شکستی ثبت نشد',
+    workerSaturated: 'اشباع worker تشخیص داده شد',
   },
   mock: {
     starting: 'راه‌اندازی سرور mock روی {url}',

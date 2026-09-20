@@ -48,7 +48,7 @@ export function buildSummary({ metrics, durationSec, vus, thresholds = [], worke
   ];
 
   if (metrics.statusCodes && Object.keys(metrics.statusCodes).length > 0) {
-    lines.push('  Status codes:');
+    lines.push(`  ${s.statusCodes || 'Status codes'}:`);
     for (const [code, count] of Object.entries(metrics.statusCodes).sort()) {
       lines.push(`    ${code}: ${count}`);
     }
@@ -56,7 +56,7 @@ export function buildSummary({ metrics, durationSec, vus, thresholds = [], worke
   }
 
   if (thresholds.length > 0) {
-    lines.push('  Thresholds:');
+    lines.push(`  ${s.thresholds || 'Thresholds'}:`);
     for (const th of thresholds) {
       const mark = th.pass ? '✓' : '✗';
       lines.push(`    ${mark} ${th.metric} ${th.op} ${th.expected} (actual ${th.actual.toFixed(2)})`);
@@ -64,10 +64,41 @@ export function buildSummary({ metrics, durationSec, vus, thresholds = [], worke
     lines.push('');
   }
 
-  if (workerSaturated) {
-    lines.push('  ⚠️  WORKER SATURATION was detected during this run');
-    lines.push('');
+  const okReqs = Math.max(0, metrics.requestsTotal - metrics.requestsFailed);
+  const okChecks = Math.max(0, metrics.checksTotal - metrics.checksFailed);
+  lines.push(`  ${s.whatPassed || 'What passed'}:`);
+  if (okReqs > 0) lines.push(`    ✓ ${okReqs} requests ok`);
+  if (okChecks > 0) lines.push(`    ✓ ${okChecks} checks ok`);
+  for (const th of thresholds.filter((x) => x.pass)) {
+    lines.push(`    ✓ ${th.metric} ${th.op} ${th.expected}`);
   }
+  if (okReqs === 0 && okChecks === 0 && thresholds.every((x) => !x.pass)) {
+    lines.push('    —');
+  }
+  lines.push('');
+
+  lines.push(`  ${s.whatFailed || 'What failed'}:`);
+  let anyFail = false;
+  if (metrics.requestsFailed > 0) {
+    lines.push(`    ✗ ${metrics.requestsFailed} failed requests (${failRate}%)`);
+    anyFail = true;
+  }
+  if (metrics.checksFailed > 0) {
+    lines.push(`    ✗ ${metrics.checksFailed} failed checks (${checkFailRate}%)`);
+    anyFail = true;
+  }
+  for (const th of thresholds.filter((x) => !x.pass)) {
+    lines.push(`    ✗ ${th.metric} ${th.op} ${th.expected} (actual ${th.actual.toFixed(2)})`);
+    anyFail = true;
+  }
+  if (workerSaturated) {
+    lines.push(`    ✗ ${s.workerSaturated || 'WORKER SATURATION detected'}`);
+    anyFail = true;
+  }
+  if (!anyFail) {
+    lines.push(`    ${s.noFailures || 'No failures recorded'}`);
+  }
+  lines.push('');
 
   return lines.join('\n');
 }
